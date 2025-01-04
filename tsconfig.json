@@ -1,0 +1,46 @@
+{
+    "compilerOptions": {
+      "target": "ES2020",                    // ECMAScriptのターゲットバージョン
+      "module": "commonjs",                  // モジュールシステム
+      "lib": ["ES2020"],                     // 使用するライブラリ
+      "outDir": "./dist",                    // コンパイル後のファイル出力先
+      "rootDir": "./src",                    // ソースファイルのルートディレクトリ
+      
+      // Strict Type-Checking Options
+      "strict": true,                        // 全ての厳密な型チェックを有効化
+      "noImplicitAny": true,                // 暗黙的なany型を禁止
+      "strictNullChecks": true,             // null/undefinedのより厳密な型チェック
+      "strictFunctionTypes": true,          // 関数型の厳密なチェック
+      "strictBindCallApply": true,          // bind/call/applyの厳密な型チェック
+      "strictPropertyInitialization": true,  // クラスプロパティの初期化チェック
+      "noImplicitThis": true,               // 暗黙的なthisを禁止
+      "alwaysStrict": true,                 // 常にstrictモードで解析
+      
+      // Additional Checks
+      "noUnusedLocals": true,               // 未使用のローカル変数をエラーに
+      "noUnusedParameters": true,           // 未使用のパラメータをエラーに
+      "noImplicitReturns": true,           // 関数の全てのパスでの戻り値を要求
+      "noFallthroughCasesInSwitch": true,  // switch文のフォールスルーを禁止
+      
+      // Module Resolution Options
+      "moduleResolution": "node",           // モジュール解決方式
+      "baseUrl": "./src",                   // モジュール解決のベースパス
+      "esModuleInterop": true,              // CommonJS/AMDモジュールの相互運用性
+      "resolveJsonModule": true,            // JSONモジュールのインポートを許可
+      
+      // Source Map Options
+      "sourceMap": true,                    // ソースマップの生成
+      
+      // Advanced Options
+      "skipLibCheck": true,                 // 宣言ファイルの型チェックをスキップ
+      "forceConsistentCasingInFileNames": true  // ファイル名の大文字小文字を厳密に
+    },
+    "include": [
+      "src/**/*"                            // コンパイル対象のファイル
+    ],
+    "exclude": [
+      "node_modules",                       // コンパイル対象外のディレクトリ
+      "dist",
+      "**/*.test.ts"
+    ]
+  }
