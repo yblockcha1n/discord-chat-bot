@@ -91,6 +91,78 @@ export class UserService {
   }
 
   /**
+ * 全ユーザーのコインをリセット
+ */
+  async resetAllCoins(adminId: string): Promise<number> {
+    const config = await this.supabase.getConfig();
+    
+    if (!config.adminIds.includes(adminId)) {
+      throw new UnauthorizedError();
+    }
+
+    return await this.supabase.resetAllCoins();
+  }
+
+  /**
+   * 特定ユーザーのコインを没収
+   */
+  async confiscateCoins(
+    adminId: string,
+    targetUserId: string,
+    reason: string
+  ): Promise<number> {
+    const config = await this.supabase.getConfig();
+    
+    if (!config.adminIds.includes(adminId)) {
+      throw new UnauthorizedError();
+    }
+
+    const user = await this.ensureUser(targetUserId);
+    const confiscatedAmount = user.pizzaCoins;
+
+    // コインを0にリセット
+    await this.supabase.updateUserCoins(targetUserId, 0);
+
+    // 没収記録
+    await this.supabase.recordConfiscation({
+      adminId,
+      targetUserId,
+      amount: confiscatedAmount,
+      reason,
+      timestamp: new Date()
+    });
+
+    return confiscatedAmount;
+  }
+
+    /**
+   * ユーザーの有効化
+   */
+  async enableUser(
+    adminId: string,
+    targetUserId: string
+  ): Promise<void> {
+    const config = await this.supabase.getConfig();
+    
+    if (!config.adminIds.includes(adminId)) {
+      throw new UnauthorizedError();
+    }
+
+    await this.supabase.updateUserDisabledStatus(targetUserId, false);
+  }
+
+  /**
+   * リーダーボードの取得
+   */
+  async getLeaderboard(page: number = 1): Promise<{
+    users: User[];
+    total: number;
+    totalCoins: number;
+  }> {
+    return await this.supabase.getLeaderboard(page);
+  }
+
+  /**
    * メッセージあたりのコイン獲得数の変更（管理者のみ）
    */
   async updateCoinsPerMessage(

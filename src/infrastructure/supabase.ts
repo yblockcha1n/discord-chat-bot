@@ -104,6 +104,48 @@ export class SupabaseClient {
     }
   }
 
+/**
+ * 没収の記録
+ */
+  async recordConfiscation(confiscation: {
+    adminId: string;
+    targetUserId: string;
+    amount: number;
+    reason: string;
+    timestamp: Date;
+  }): Promise<void> {
+    const { error } = await this.client
+      .from('confiscations')
+      .insert([{
+        admin_id: confiscation.adminId,
+        target_user_id: confiscation.targetUserId,
+        amount: confiscation.amount,
+        reason: confiscation.reason,
+        timestamp: confiscation.timestamp.toISOString()
+      }]);
+
+    if (error) {
+      throw new PizzaCoinError(`Failed to record confiscation: ${error.message}`);
+    }
+  }
+
+/**
+ * 全ユーザーのコインをリセット
+ */
+  async resetAllCoins(): Promise<number> {
+    const { data, error } = await this.client
+      .from('users')
+      .update({ pizza_coins: 0 })
+      .neq('pizza_coins', 0)
+      .select('id');
+
+    if (error) {
+      throw new PizzaCoinError(`Failed to reset all coins: ${error.message}`);
+    }
+
+    return data.length;
+  }
+
   /**
    * BOT設定の取得
    */
@@ -122,6 +164,53 @@ export class SupabaseClient {
       id: data.id,
       coinsPerMessage: data.coins_per_message,
       adminIds: data.admin_ids
+    };
+  }
+
+    /**
+   * リーダーボードデータの取得
+   */
+  async getLeaderboard(page: number = 1): Promise<{
+    users: User[];
+    total: number;
+    totalCoins: number;
+  }> {
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    // アクティブなユーザーのみを取得
+    const { data: users, error, count } = await this.client
+      .from('users')
+      .select('*', { count: 'exact' })
+      .eq('is_disabled', false)
+      .order('pizza_coins', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      throw new PizzaCoinError(`Failed to get leaderboard: ${error.message}`);
+    }
+
+    // 総コイン数の計算
+    const { data: totalData, error: totalError } = await this.client
+      .from('users')
+      .select('pizza_coins')
+      .eq('is_disabled', false);
+
+    if (totalError) {
+      throw new PizzaCoinError(`Failed to get total coins: ${totalError.message}`);
+    }
+
+    const totalCoins = totalData.reduce((sum, user) => sum + (user.pizza_coins || 0), 0);
+
+    return {
+      users: users.map(user => ({
+        id: user.id,
+        pizzaCoins: user.pizza_coins,
+        isDisabled: user.is_disabled,
+        createdAt: new Date(user.created_at)
+      })),
+      total: count || 0,
+      totalCoins
     };
   }
 

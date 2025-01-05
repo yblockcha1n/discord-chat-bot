@@ -50,6 +50,22 @@ CREATE INDEX idx_transactions_sender_id ON transactions(sender_id);
 CREATE INDEX idx_transactions_receiver_id ON transactions(receiver_id);
 CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
 
+-- Confiscationsテーブル
+CREATE TABLE confiscations (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    admin_id TEXT NOT NULL REFERENCES users(id),
+    target_user_id TEXT NOT NULL REFERENCES users(id),
+    amount INTEGER NOT NULL CHECK (amount >= 0),
+    reason TEXT NOT NULL,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- インデックス
+CREATE INDEX idx_confiscations_admin_id ON confiscations(admin_id);
+CREATE INDEX idx_confiscations_target_user_id ON confiscations(target_user_id);
+CREATE INDEX idx_confiscations_timestamp ON confiscations(timestamp);
+
 -- Configテーブル (シングルトン)
 CREATE TABLE config (
     id BOOLEAN PRIMARY KEY DEFAULT TRUE,
@@ -77,6 +93,7 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE confiscations ENABLE ROW LEVEL SECURITY;
 
 -- ポリシーの設定
 -- Users
@@ -94,6 +111,12 @@ CREATE POLICY "Allow read access to transactions for all" ON transactions
     FOR SELECT USING (true);
 
 CREATE POLICY "Enable insert for service role only" ON transactions
+    FOR INSERT WITH CHECK (auth.role() = 'service_role');
+
+CREATE POLICY "Allow read access to confiscations for all" ON confiscations
+    FOR SELECT USING (true);
+
+CREATE POLICY "Enable insert for service role only" ON confiscations
     FOR INSERT WITH CHECK (auth.role() = 'service_role');
 
 -- Config
